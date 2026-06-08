@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X O ARCADE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen active">
+    <div class="logo-block">
+      <div class="logo-mark">
+        <span class="lx">X</span>
+        <span style="color:var(--gray);margin:0 8px;">VS</span>
+        <span class="lo">O</span>
+      </div>
+      <p class="tagline">ARCADE EDITION</p>
+    </div>
+
+    <div class="card pixel-box">
+      <button class="btn primary" id="btn-create">▶ إنشاء غرفة جديدة</button>
+
+      <div class="divider">— أو —</div>
+
+      <label class="field-label">► ادخل كود الغرفة</label>
+      <div class="input-row">
+        <input type="text" id="join-code" placeholder="ABC123" maxlength="6" autocomplete="off" spellcheck="false" />
+        <button class="btn secondary small" id="btn-join">GO</button>
+      </div>
+      <p class="err" id="join-err"></p>
+    </div>
+
+    <p class="insert-coin">▼ INSERT COIN TO PLAY ▼</p>
+  </section>
+
+  <!-- WAITING -->
+  <section id="screen-waiting" class="screen">
+    <div class="back-row">
+      <button class="btn-back" id="btn-back-waiting">◄ رجوع</button>
+    </div>
+    <p class="page-title">► ابعت الكود لصاحبك ◄</p>
+
+    <div class="card pixel-box">
+      <div class="code-box">
+        <div class="code" id="room-code-display">------</div>
+        <p class="code-hint">ROOM CODE</p>
+      </div>
+      <button class="btn primary small" id="btn-copy">► نسخ الكود ◄</button>
+      <div class="status-row">
+        <div class="dot waiting" id="wait-dot"></div>
+        <span id="wait-text">WAITING FOR PLAYER 2...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <div class="game-header">
+      <button class="btn-back" id="btn-back-game">◄ خروج</button>
+      <div class="my-symbol" id="my-symbol-display">PLAYER: X</div>
+    </div>
+
+    <div class="turn-banner x-turn" id="turn-banner">
+      <span id="turn-text">YOUR TURN</span>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="result-msg" id="result-msg"></div>
+
+    <div class="score-row">
+      <div class="score-card x-card">
+        <div class="sc-label">X</div>
+        <div class="sc-val" id="score-x">0</div>
+      </div>
+      <div class="score-card d-card">
+        <div class="sc-label">TIE</div>
+        <div class="sc-val" id="score-d">0</div>
+      </div>
+      <div class="score-card o-card">
+        <div class="sc-label">O</div>
+        <div class="sc-val" id="score-o">0</div>
+      </div>
+    </div>
+
+    <button class="btn primary small" id="btn-restart">► جولة جديدة ◄</button>
+  </section>
+
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>
