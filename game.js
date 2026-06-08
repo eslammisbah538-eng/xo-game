@@ -160,7 +160,7 @@ async function createRoom() {
       unsub();
       sfxJoin();
       scores = data.scores || { X: 0, O: 0, D: 0 };
-      launchGame(data);
+      launchGame(data, true);
     }
   });
   unsubscribes.push(unsub);
@@ -188,7 +188,7 @@ async function joinRoom() {
 
   await update(roomRef, { status: "playing", "players/O": true });
   sfxJoin();
-  launchGame({ ...data, status: "playing" });
+  launchGame({ ...data, status: "playing" }, true);
 }
 
 // ================================================
@@ -208,7 +208,7 @@ document.getElementById("btn-back-waiting").addEventListener("click", goHome);
 // ================================================
 // LAUNCH GAME
 // ================================================
-function launchGame(data) {
+function launchGame(data, startListen = false) {
   gameBoard    = data.board || Array(9).fill(null);
   currentTurn  = data.turn  || "X";
   gameOver     = false;
@@ -222,7 +222,7 @@ function launchGame(data) {
   renderBoard();
   updateTurnBanner();
   showScreen("game");
-  listenRoom();
+  if (startListen) listenRoom();
 }
 
 // ================================================
