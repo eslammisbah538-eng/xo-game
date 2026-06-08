@@ -83,7 +83,7 @@ document.addEventListener('click', () => { try { getAudio().resume(); } catch {}
 // ================================================
 let roomId      = null;
 let mySymbol    = null;
-let gameBoard   = Array(9).fill(null);
+let gameBoard   = Array(9).fill("");
 let currentTurn = "X";
 let gameOver    = false;
 let scores      = { X: 0, O: 0, D: 0 };
@@ -123,6 +123,25 @@ function clearListeners() {
 }
 
 // ================================================
+// FIX: Firebase drops null values from arrays.
+// We use "" for empty cells and normalise on every read.
+// ================================================
+function normalizeBoard(board) {
+  const result = Array(9).fill("");
+  if (!board) return result;
+  if (Array.isArray(board)) {
+    board.forEach((v, i) => { if (i < 9) result[i] = v || ""; });
+  } else if (typeof board === "object") {
+    // Firebase may return a sparse object { "0": "X", "4": "O", ... }
+    Object.keys(board).forEach(k => {
+      const i = parseInt(k, 10);
+      if (!isNaN(i) && i >= 0 && i < 9) result[i] = board[k] || "";
+    });
+  }
+  return result;
+}
+
+// ================================================
 // HOME
 // ================================================
 document.getElementById("btn-create").addEventListener("click", createRoom);
@@ -141,11 +160,11 @@ async function createRoom() {
   roomRef  = ref(db, "rooms/" + roomId);
 
   await set(roomRef, {
-    status: "waiting",
-    board:  Array(9).fill(null),
-    turn:   "X",
-    scores: { X: 0, O: 0, D: 0 },
-    result: null,
+    status:  "waiting",
+    board:   ["","","","","","","","",""],   // "" not null — Firebase keeps these
+    turn:    "X",
+    scores:  { X: 0, O: 0, D: 0 },
+    result:  "",
     winLine: [],
     restart: 0
   });
@@ -160,7 +179,7 @@ async function createRoom() {
       unsub();
       sfxJoin();
       scores = data.scores || { X: 0, O: 0, D: 0 };
-      launchGame(data, true);
+      launchGame(data);
     }
   });
   unsubscribes.push(unsub);
@@ -188,7 +207,7 @@ async function joinRoom() {
 
   await update(roomRef, { status: "playing", "players/O": true });
   sfxJoin();
-  launchGame({ ...data, status: "playing" }, true);
+  launchGame({ ...data, status: "playing" });
 }
 
 // ================================================
@@ -208,8 +227,8 @@ document.getElementById("btn-back-waiting").addEventListener("click", goHome);
 // ================================================
 // LAUNCH GAME
 // ================================================
-function launchGame(data, startListen = false) {
-  gameBoard    = data.board || Array(9).fill(null);
+function launchGame(data) {
+  gameBoard    = normalizeBoard(data.board);   // FIX: always 9 elements
   currentTurn  = data.turn  || "X";
   gameOver     = false;
 
@@ -222,7 +241,7 @@ function launchGame(data, startListen = false) {
   renderBoard();
   updateTurnBanner();
   showScreen("game");
-  if (startListen) listenRoom();
+  listenRoom();
 }
 
 // ================================================
@@ -234,12 +253,13 @@ function listenRoom() {
     const data = snap.val();
     if (!data) { goHome(); return; }
 
-    const boardChanged = JSON.stringify(data.board) !== JSON.stringify(gameBoard);
+    const newBoard     = normalizeBoard(data.board);   // FIX
+    const boardChanged = JSON.stringify(newBoard) !== JSON.stringify(gameBoard);
     const turnChanged  = data.turn !== currentTurn;
 
     if (boardChanged || turnChanged) {
       const prevBoard = [...gameBoard];
-      gameBoard    = data.board;
+      gameBoard    = newBoard;
       currentTurn  = data.turn;
       scores       = data.scores || scores;
 
@@ -295,7 +315,7 @@ async function makeMove(idx) {
   const isDraw = !result && gameBoard.every(Boolean);
   const nextTurn = mySymbol === "X" ? "O" : "X";
 
-  const updateData = { board: gameBoard, turn: nextTurn };
+  const updateData = { board: [...gameBoard], turn: nextTurn };
 
   if (result) {
     scores[mySymbol] = (scores[mySymbol] || 0) + 1;
@@ -315,7 +335,7 @@ async function makeMove(idx) {
   renderBoard();
   updateTurnBanner();
 
-  if (result)  applyResult(mySymbol + "_win", result.line);
+  if (result)      applyResult(mySymbol + "_win", result.line);
   else if (isDraw) applyResult("draw", []);
 }
 
@@ -384,8 +404,11 @@ document.getElementById("btn-restart").addEventListener("click", async () => {
   sfxClick();
   if (!roomRef) return;
   const restartData = {
-    board: Array(9).fill(null), turn: "X",
-    result: null, winLine: [], restart: Date.now()
+    board:   ["","","","","","","","",""],   // FIX: "" not null
+    turn:    "X",
+    result:  "",
+    winLine: [],
+    restart: Date.now()
   };
   await update(roomRef, restartData);
   resetLocalGame(restartData);
@@ -393,7 +416,7 @@ document.getElementById("btn-restart").addEventListener("click", async () => {
 
 function resetLocalGame(data) {
   gameOver    = false;
-  gameBoard   = Array(9).fill(null);
+  gameBoard   = Array(9).fill("");   // FIX
   currentTurn = "X";
   document.getElementById("result-msg").textContent = "";
   document.getElementById("result-msg").className   = "result-msg";
@@ -414,7 +437,7 @@ async function goHome() {
     try { await remove(roomRef); } catch {}
   }
   roomId = roomRef = mySymbol = null;
-  gameBoard   = Array(9).fill(null);
+  gameBoard   = Array(9).fill("");   // FIX
   currentTurn = "X";
   gameOver    = false;
   scores      = { X: 0, O: 0, D: 0 };
